@@ -1,0 +1,701 @@
+Análise de Vinhos por André Miranda
+========================================================
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+# Carregue aqui todos os pacotes utilizados 
+# na sua análise realizada neste arquivo fonte.
+
+# Note que o parâmetro "echo" foi definido como FALSE neste código.
+# Isso previne que o código apresente resultados formatados em HTML.
+# Você deve definir echo=FALSE para todos os blocos de código no seu arquivo.
+
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(dplyr)
+theme_set(theme_bw())
+```
+
+```{r echo=FALSE, Load_the_Data}
+# Carregamento dos dados
+wq <- read.csv('wineQualityWhites.csv')
+
+# Definição do tipo de vinho analisado
+wq$type <- 'branco'
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Transformação de mg para g no dióxido de enxofre
+wq$free.sulfur.dioxide <- wq$free.sulfur.dioxide/1000
+wq$total.sulfur.dioxide <- wq$total.sulfur.dioxide/1000
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Limites estabelecidos por lei
+fixed.acidity.min <- 3.5 # g/L
+volatile.acidity.max.red <- 1.2 # g/L
+volatile.acidity.max.white <- 1.08 # g/L
+citric.acid.max <- 1 #g/L
+chlorides.max <- 1 # g/L
+total.sulfur.dioxide.max.red1 <- 0.15 # g/L
+total.sulfur.dioxide.max.red2 <- 0.2 # g/L
+total.sulfur.dioxide.max.white1 <- 0.2 # g/L
+total.sulfur.dioxide.max.white2 <- 0.25 # g/L
+sulphates.max <- 2 # g/L
+alcohol.min <- 9 # % vol
+alcohol.max <- 15 # % vol
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Funções de classificação e checagem dos limites estabelecidos por lei
+fixed.acidity.check <- function(fa, fa.min = fixed.acidity.min){
+  return(fa >= fa.min)
+}
+
+volatile.acidity.check <- function(va, type,
+                                   va.max.red = volatile.acidity.max.red,
+                                   va.max.white = volatile.acidity.max.white){
+  if (type == 'tinto') {
+    return(va <= va.max.red)
+  } else {
+    return(va <= va.max.white)
+  }
+}
+
+citric.acid.check <- function(ca, ca.max = citric.acid.max){
+  return(ca <= ca.max)
+}
+
+classification <- function(rs, fa){
+  if (rs <= 4) {
+    return('seco')
+  } else if (rs <= 9) {
+      if ((rs - fa) > 2) {
+        return('meio seco')
+      } else {
+          return('seco')
+        }
+  } else if (rs <= 12) {
+      return('meio seco')
+  } else if (rs <= 18) {
+      if ((rs - fa) > 10) {
+        return('meio doce')
+      } else {
+          return('meio seco')
+      }
+  } else if (rs <= 45) {
+      return('meio doce')
+  } else {
+    return('doce')
+  }
+}
+
+chlorides.check <- function(chl, chl.max = chlorides.max){
+  return(chl <= chl.max)
+}
+
+total.sulfur.dioxide.check <- function(tsd, rs, type,
+                                       tsd.max.red1 = total.sulfur.dioxide.max.red1,
+                                       tsd.max.red2 = total.sulfur.dioxide.max.red2,
+                                       tsd.max.white1 = total.sulfur.dioxide.max.white1,
+                                       tsd.max.white2 = total.sulfur.dioxide.max.white2) {
+  if (type == 'tinto') {
+    if (rs < 5) {
+      return(tsd <= tsd.max.red1)
+    } else {
+      return(tsd <= tsd.max.red2)
+    }
+  } else {
+    if (rs < 5) {
+      return(tsd <= tsd.max.white1)
+    } else {
+      return(tsd <= tsd.max.white2)
+    }
+  }
+}
+
+sulphates.check <- function(sph, sph.max = sulphates.max){
+  return(sph <= sph.max)
+}
+
+alcohol.check <- function(alc, alc.min = alcohol.min, alc.max = alcohol.max){
+  return((alc >= alc.min) & (alc <= alc.max))
+}
+```
+
+# Seção de Gráficos Univariados
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+dim(wq[, c(1:13)])
+str(wq[, c(1:13)])
+
+wq <- wq[-1]
+```
+
+Nosso conjunto de dados possui 13 variáveis e um total de 4898 observações. Podemos notar que X é somente uma variável de índice, podendo ser descartada sem maiores prejuízos à análise. Todas as variáveis são numéricas, exceto a que informa a qualidade, que é do tipo inteiro. Optei por alterar a unidade das variáveis free.sulfur.dioxide e total.sulfur.dioxide, de mg/L para g/L, assim igualando-as às demais.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# Aplica a checagem dos limites criando novas colunas no dataframe
+wq <- transform(wq, classification = mapply(classification,
+                                            residual.sugar,
+                                            fixed.acidity))
+wq$fixed.acidity.check <- sapply(wq$fixed.acidity, fixed.acidity.check)
+wq <- transform(wq, volatile.acidity.check = mapply(volatile.acidity.check,
+                                            volatile.acidity,
+                                            type))
+wq$citric.acid.check <- sapply(wq$citric.acid, citric.acid.check)
+wq$chlorides.check <- sapply(wq$chlorides, chlorides.check)
+wq <- transform(wq,
+                total.sulfur.dioxide.check = mapply(total.sulfur.dioxide.check,
+                                                    total.sulfur.dioxide, 
+                                                    residual.sugar, type))
+wq$sulphates.check <- sapply(wq$sulphates, sulphates.check)
+wq$alcohol.check <- sapply(wq$alcohol, alcohol.check)
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = quality)) +
+  geom_histogram(binwidth = 0.5) +
+  scale_x_continuous(breaks = seq(3,9,1))
+
+summary(wq$quality)
+table(wq$quality)
+```
+
+A média da qualidade dos vinhos analisados é 5,878, numa escala de 0 a 10. A grande maioria dos vinhos possui qualidade entre 5 e 7. O pior vinho possui qualidade 3, e o melhor, 9.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = fixed.acidity)) +
+  geom_histogram(binwidth = 0.1)
+
+summary(wq$fixed.acidity)
+table(wq$fixed.acidity.check)
+```
+
+A acidez fixa apresenta uma distribuição normal centrada em 6,8g/L, com a maioria dos valores variando entre 6,3 e 7,3g/L. Outilers chegam a 14,2g/L.
+
+Todos os vinhos do conjunto de dados obedecem à regulação para a acidez fixa.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = volatile.acidity)) + 
+  geom_histogram(binwidth = 0.01)
+
+summary(wq$volatile.acidity)
+table(wq$volatile.acidity.check)
+```
+
+A acidez volátil média é de 0.2782g/L. A maioria dos valores se encontra entre 0.21 e 0.32g/L. O menor valor é de 0.08, e o maior de 1.1g/L.
+
+Apenas um vinho não obedece aos padrões exigidos para a acidez volátil.
+
+Em breve, vamos investigar a relação entre acidez fixa e volátil.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = citric.acid)) +
+  geom_histogram(binwidth = 0.01)
+
+summary(wq$citric.acid)
+table(wq$citric.acid.check)
+```
+
+A concentração média de ácido cítrico é 0.3342g/L. A maioria dos valores se encontra entre 0.27 e 0.39g/L. O menor valor é de 0, e o maior de 1.66g/L. A distribuição parece tender à normal, ressalvando-se as quantidades atípicas para os valores de 0.49 e 0.74g/L.
+
+Dois vinhos estão fora dos padrões para concentração de ácido cítrico.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+p1 <- ggplot(data = wq, aes(x = residual.sugar)) +
+  geom_histogram(binwidth = 0.1)
+
+p2 <- p1 + scale_x_log10()
+
+grid.arrange(p1, p2)
+
+summary(wq$residual.sugar)
+```
+
+Os valores da média e da mediana sugerem uma distribuição de cauda longa, confirmada na visualização. A transformação logarítmica do gráfico gera uma distribuição bimodal, com picos entre 1 e 2, e outro próximo a 10.
+
+A partir das concentrações de açucar residual e acidez fixa, podem-se classificar os vinhos em seco, meio seco, meio doce e doce.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = classification)) + geom_bar()
+table(wq$classification)
+```
+
+A maioria é composta por vinho do tipo seco, seguida na ordem pelos meio secos, os meio doces e os doces, com apenas uma ocorrência.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = chlorides)) +
+  geom_histogram(binwidth = 0.001)
+
+summary(wq$chlorides)
+table(wq$chlorides.check)
+```
+
+A concentração de cloreto de sódio apresenta uma distribuição aproximadamente normal centrada próxima a 0,04g/L.
+
+Todos os vinhos do conjunto de dados obedecem à regulação para os cloretos. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = free.sulfur.dioxide)) +
+  geom_histogram(binwidth = 0.005)
+
+summary(wq$free.sulfur.dioxide)
+```
+
+A concentração de dióxido de enxofre livre apresenta uma distribuição aproximadamente normal, centrada perto de 0,035g/L.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = total.sulfur.dioxide)) +
+  geom_histogram(binwidth = 0.005)
+
+summary(wq$total.sulfur.dioxide)
+table(wq$total.sulfur.dioxide.check)
+```
+
+A concentração total de dióxido de enxofre apresenta uma distribuição normal centrada em 0,13.
+
+Sessenta e três vinhos estão além do limite permitido para esta concentração.
+
+Espera-se observar adiante alguma correlação entre as concentrações livres e totais dessa substância.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = density)) +
+  geom_histogram(binwidth = 0.0005)
+
+summary(wq$density)
+```
+
+A densidade apresenta uma distribuição normal centrada em aproximadamente 0,994g/cm^3^. Posteriormente, investigar-se-á a sua relação com a porcentagem de álcool no vinho.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = pH)) +
+  geom_histogram(binwidth = 0.05)
+
+summary(wq$pH)
+```
+
+O pH apresenta uma distribuição normal centrada em aproximadamente 3,18. Espera-se observar uma forte correlação entre essa variável e a acidez fixa.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = sulphates)) +
+  geom_histogram(binwidth = 0.01)
+
+summary(wq$sulphates)
+table(wq$sulphates.check)
+```
+
+A concentração de sulfato de potássio apresenta uma distribuição aproximadamente normal, com alguns valores específicos se destacando, principalmente em torno de 0,5g/L, que está a direita do centro da distribuição.
+
+Todos os vinhos do conjunto de dados obedecem à regulação para os sulfatos.
+
+Adiante, veremos como essa variável se relaciona com o dióxido de enxofre.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = alcohol)) +
+  geom_histogram(binwidth = 0.1)
+
+summary(wq$alcohol)
+table(wq$alcohol.check)
+```
+
+A porcentagem de álcool apresenta uma distribuição skewed positiva com bastante ruído, e com o pico em aproximadamente 9,5%.
+
+Do total de vinhos, 317 estão fora dos limites estabelecidos pela regulação para a porcentagem de álcool.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+wq <- transform(wq, check.count = fixed.acidity.check +
+                  volatile.acidity.check +
+                  citric.acid.check +
+                  chlorides.check +
+                  total.sulfur.dioxide.check +
+                  sulphates.check +
+                  alcohol.check)
+
+table(7-wq$check.count)
+```
+
+Do total de 4898 vinhos desta análise, 4522 passaram em todos os testes, 369 reprovaram em apenas um teste e 7 reprovaram em dois testes.
+
+# Análise Univariada
+
+### Qual é a estrutura do conjunto de dados?
+
+O conjunto de dados possui 4898 observações de 11 variáveis numéricas (atributos) e 1 variável inteira (alvo).
+
+### Quais são os principais atributos de interesse deste conjunto de dados?
+
+O pH (medida de acidez), o teor alcóolico, o açúcar e o sal. Além de, é claro, a qualidade.
+
+### Quais outros atributos você acha que podem lhe auxiliar na investigação destes atributos de interesse?
+
+Os atributos que descrevem a concentração de ácidos no vinho podem ajudar a explicar o pH. Além disso, espera-se que teor alcóolico e concentração de açúcar se expliquem mutuamente, uma vez que a fermentação alcóolica transforma o açúcar da uva em álcool.
+
+### Você criou novas variáveis a partir dos atributos existentes no conjunto de dados?
+
+Sim. Tendo em vista os limites estabelecidos por lei para vinhos em Portugal, criei variáveis lógicas para testar cada atributo com relação a esses limites, e uma variável inteira com a quantidade aprovações para cada vinho. Também classifiquei os vinhos em seco, meio seco, meio doce e doce, a partir das concentrações de açúcar residual e acidez fixa, com base da legislação (http://www.ivv.gov.pt/np4/89/). 
+
+### Dos atributos investigados, distribuições incomuns foram encontradas? Você aplicou operações nos dados para limpá-los, ajustá-los ou mudar a forma dos dados? Se sim, por quê?
+
+A distribuição menos comum encontrada foi a da porcentagem de álcool. Pareceu-me próxima a uma skewed positiva, porém com bastante ruído. Não fiz nenhuma alteração nos dados ou no gráfico.
+
+# Seção de Gráficos Bivariados
+```{r echo=FALSE, Bivariate_Plots}
+wq_original <- wq[ ,c(1:12)]
+ggpairs(wq_original)
+```
+
+As maiores correlações encontradas são entre densidade e açucar residual (0.839), densidade e álcool (-0.78) e dióxido de enxofre livre e total (0.616). Mostraremos mais adiante como as duas primeiras se relacionam. A terceira é auto-evidente, pois a concentração de um está contida na do outro.
+
+O atributo que a princípio possui a maior correlação com a qualidade é o teor alcóolico (0,436), seguido pela densidade (-0,307) e o nível de sal (-0,21). A seguir, iremos investigar mais a fundo como cada um desses atributos se relaciona com a qualidade, nosso alvo.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = alcohol, y = quality)) +
+  geom_point(alpha = 1/50) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$alcohol, wq$quality)
+```
+
+Plotando uma dispersão de qualidade por concentração de álcool, observamos um perfil crescente, que é confirmado pela quase linear curva de suavização da média.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = density, y = quality)) +
+  geom_point(alpha = 1/25) +
+  xlim(min(wq$density), quantile(wq$density, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$density, wq$quality)
+```
+
+Plotando uma dispersão de qualidade por densidade, observamos um perfil decrescente, salvo uma suave inflexão próxima de 0,997g/L.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = chlorides, y = quality)) +
+  geom_point(alpha = 1/100) +
+  xlim(min(wq$chlorides), quantile(wq$chlorides, 0.97)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$density, wq$quality)
+```
+
+Plotando uma dispersão de qualidade por concentração de sal, observamos um perfil decrescente, salvo um intervalo aproximadamente constante entre 0,05 0,06g/L.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
+  geom_point(alpha = 1/100) +
+  xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$volatile.acidity, wq$quality)
+```
+
+Quanto maior a acidez volátil, pior a qualidade, salvo entre os valores 0,25 e 0,45g/L de acidez volátil, onde a qualidade média fica aproximadamente constante. Adiante, iremos investigar esse fenômeno.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = pH, y = quality)) +
+  geom_point(alpha = 1/100) +
+  xlim(quantile(wq$pH, 0.01), quantile(wq$pH, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$pH, wq$quality)
+```
+
+A relação entre pH e qualidade é bastante sutil, mas percebe-se um discreto pico entre os vinhos mais alcalinos.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = alcohol, y = density)) +
+  geom_point(alpha = 1/10) +
+  ylim(min(wq$density), quantile(wq$density, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$alcohol, wq$density)
+```
+
+Como era de se esperar, há uma forte correlação inversa entre porcentagem de álcool e densidade, uma vez que a densidade do álcool é menor que a da água.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = residual.sugar, y = density)) +
+  geom_point(alpha = 1/10) +
+  ylim(min(wq$density), quantile(wq$density, 0.99)) +
+  xlim(0, quantile(wq$residual.sugar, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$residual.sugar, wq$density)
+```
+
+Podemos observar uma forte correlação direta entre o açucar residual e a densidade. Isso também já era esperado, pois a concentração de açucar residual é, a princípio, inversamente proporional à de álcool, uma vez que um dá origem ao outro por meio da fermentação alcóolica.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = residual.sugar, y = alcohol)) +
+  geom_point(alpha = 1/10) +
+  xlim(0, quantile(wq$residual.sugar, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$residual.sugar, wq$alcohol)
+```
+
+Ao contrário do que supúnhamos, a correlação entre álcool e açúcar residual não é estritamente decresente, sendo crescente até aproximadamente 3g/L de açúcar residual. Provavelmente, isso ocorre em função dos diferentes tipos de uva utilizados na produção do vinho verde, com cada um tendo a sua concentração inicial de açúcar.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = fixed.acidity, y = volatile.acidity)) +
+  geom_point(alpha = 1/10) +
+  xlim(quantile(wq$fixed.acidity, 0.01), quantile(wq$fixed.acidity, 0.99)) +
+  ylim(quantile(wq$volatile.acidity, 0.01), quantile(wq$volatile.acidity, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$fixed.acidity, wq$volatile.acidity)
+```
+
+Não há aparente correlação entre acidez fixa e volátil, o que pode ser constatado pela constância da curva suavizada da média da acidez volátil em relação à acidez fixa.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = fixed.acidity, y = pH)) +
+  geom_point(alpha = 1/25) +
+  xlim(quantile(wq$fixed.acidity, 0.01), quantile(wq$fixed.acidity, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$fixed.acidity, wq$pH)
+```
+
+Bastante significativa é a correlação entre acidez fixa e pH, conforme aventamos anteriormente. O gráfico mostra uma relação da média de pH por acidez fixa estritamente decrescente e quase linear. Lembrando que quanto mais ácida uma solução, menor é o pH.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = sulphates, y = total.sulfur.dioxide)) +
+  geom_point(alpha = 1/10) +
+  xlim(quantile(wq$sulphates, 0.01), quantile(wq$sulphates, 0.99)) +
+  ylim(quantile(wq$total.sulfur.dioxide, 0.01), quantile(wq$total.sulfur.dioxide, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$sulphates, wq$total.sulfur.dioxide)
+```
+
+Entre as concentrações de sulfato de potássio e dióxido de enxofre, vemos uma relação crescente até o valor de aproximadamente 0,5g/L para o primeiro, a partir de onde ela passa a ser quase constante.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+wq$quality.factor <- factor(wq$quality, levels = seq(9,3,-1), ordered = TRUE)
+
+ggplot(data = wq, aes(x = classification, fill = quality.factor)) +
+  geom_bar() +
+  scale_fill_brewer(type = 'div', palette = 'RdBu', direction = -1)
+
+wq.quality_by_class <- wq %>% 
+  group_by(classification) %>% 
+  summarise(quality_mean = mean(quality), n = n())
+  
+wq.quality_by_class
+```
+
+Analisando a qualidade dos vinhos a partir da sua classificação, podemos ver que os vinhos secos têm uma proporção maior de notas 7 e 8 que os meio secos, e estes, maior que os meio doces. Isso reflete na qualidade média de cada tipo. Não podemos considerar a qualidade média dos vinhos doces, pois só há um exemplar desse tipo no conjunto de dados.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = residual.sugar, y = quality)) +
+  geom_point(alpha = 1/50) +
+  xlim(0, quantile(wq$residual.sugar, 0.99)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth()
+
+cor(wq$residual.sugar, wq$quality)
+```
+
+Investigando a variável mais determinante para a classificação vinho (açucar residual), não vemos uma correlação muito clara, no entanto, podemos notar por exemplo um pico nas concentrações mais baixas de açucar, onde se encontram os vinhos secos.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = check.count, fill = quality.factor)) +
+  geom_bar() +
+  scale_fill_brewer(type = 'div', palette = 'RdBu', direction = -1)
+
+wq.quality_by_check <- wq %>% 
+  group_by(check.count) %>% 
+  summarise(quality_mean = mean(quality), n = n())
+  
+wq.quality_by_check
+```
+
+Analisando a qualidade dos vinhos a partir da contagem de aprovações nos testes dos limites estabelecidos por lei, podemos ver que a proporção de notas 6, 7 e 8 entre os vinhos que passaram em todos os testes é maior que naqueles que reprovaram um dos testes. Nestes, os vinhos com nota 5 representam mais da metade.
+
+
+# Análise Bivariada
+
+### Discuta sobre alguns dos relacionamentos observados nesta parte da investigação. Como os atributos de interesse variaram no conjunto de dados?
+
+O atributo de maior interesse, a qualidade, está bastante correlacionado com o teor alcóolico. Este, por sua vez, pode ser estimado pelo açucar residual, numa relação inversa, em virtude da fermentação alcóolica. A densidade demonstrou estar dependente do teor alcóolico, por conta da diferença de densidade entre álcool e água. Por conta disso, a densidade também está consideravelmente correlacionada com a qualidade e com o açucar residual. Este, por outro lado, não mostrou ter com a qualidade uma correlação forte. No entanto, menores concentrações daquele parecem ter agradado mais os avaliadores. Outro atributo que em menores concentrações tende a agradar mais é o sal. Por fim, a relação entre pH e qualidade mostrou-se sutil, mas pôde-se constatar uma leve predileção dos avaliadores pelos vinhos menos ácidos.
+
+### Você observou algum relacionamento interessante entre os outros atributos (os que não são de interesse)?
+
+A terceira maior correlação observada foi entre as concentrações de dióxido de enxofre livre e total, o que já era de se esperar, pois uma está contida na outra.
+
+### Qual foi o relacionamento mais forte encontrado?
+
+A maior correlação encontrada (0,839) foi entre densidade e açucar residual.
+
+
+# Seção de Gráficos Multivariados
+
+```{r echo=FALSE, Multivariate_Plots}
+
+```
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = volatile.acidity, y = alcohol)) +
+  xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.99)) +
+  geom_point(aes(color = quality.factor), alpha = 1) +
+  scale_color_brewer(type = 'seq', direction = -1)
+```
+
+A qualidade é tanto maior quanto menor a acidez volatil e maior o teor alcóolico. Todavia, para teores alcóolicos acima de 12%, o aumento da acidez volátil parece não interferir na qualidade.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
+  xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
+  geom_smooth(aes(color = alcohol > 12))
+```
+
+A relação entre qualidade e acidez volátil é diferente para níveis de teor alcóolico abaixo e acima de 12%.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = citric.acid, y = sulphates)) +
+  xlim(min(wq$citric.acid), quantile(wq$citric.acid, 0.99)) +
+  geom_point(aes(color = quality.factor), alpha = 1) +
+  scale_color_brewer(type = 'seq', direction = -1)
+```
+
+Não se observa uma relação definida entre ácido cítrico, sulfato de potássio e a qualidade.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = fixed.acidity, y = volatile.acidity)) +
+  xlim(quantile(wq$fixed.acidity, 0.01), quantile(wq$fixed.acidity, 0.99)) +
+  ylim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.99)) +
+  geom_point(aes(color = quality.factor), alpha = 1) +
+  scale_color_brewer(type = 'seq', direction = -1)
+```
+
+Não é possível identificar a relação entre acidez fixa, volátil e a qualidade.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = wq, aes(x = residual.sugar, y = alcohol)) +
+  geom_point(aes(color = density), alpha = 1/2) +
+  xlim(0, quantile(wq$residual.sugar, 0.99)) +
+  scale_colour_gradient(low = '#56B1F7', high = '#132B43',
+                        limits = c(min(wq$density), quantile(wq$density, 0.99)))
+```
+
+A densidade é tanto maior quanto maior a concentração de açúcar e quanto menor o teor alcóolico, confirmando algumas das observações da seção anterior.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(data = subset(wq, classification != 'doce'),
+       aes(x = classification, y = free.sulfur.dioxide/total.sulfur.dioxide)) +
+  geom_boxplot()
+```
+
+A proporção entre dióxido de enxofre livre e total é aproximadamente a mesma entre as diferentes classificações de vinho branco, gravitando um pouco acima de 0,25.
+
+# Análise Multivariada
+
+### Discuta sobre os relacionamentos observados nesta parte da investigação. Quais atributos que fortaleceram os demais na observação das variáveis de interesse?
+
+Muitas das tendências observadas na seção anterior foram confirmadas nesta. Por exemplo, a relação entre açúcar residual, teor alcóolico e densidade, da qual conhecemos a forte interdependência, foi confirmada pela observação das três variáveis presentes no mesmo gráfico.
+
+### Interações surpreendentes e/ou interessantes foram encontradas entre os atributos?
+
+Sim. Descobriu-se que a relação entre acidez volátil e a qualidade sofre influência do teor alcóolico.
+
+### OPCIONAL: Modelos foram criados usando este conjunto de dados? Discuta sobre os pontos fortes e as limitações do seu modelo.
+
+------
+
+# Gráficos Finais e Sumário
+
+### Primeiro Gráfico
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
+ggplot(data = wq, aes(x = quality)) +
+  geom_histogram(fill = 'blue', binwidth = 0.5) +
+  scale_x_continuous(breaks = seq(3,9,1)) +
+  labs(title = 'Distribuição da qualidade',
+       x = 'Qualidade', y = 'Ocorrências') +
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank())
+```
+
+### Descrição do Primeiro Gráfico
+
+O gráfico acima mostra a distribuição dos vinhos do conjunto de dados segundo a qualidade, que é a variável que mais nos interessou nesta análise. Seu valor para cada ponto de dado representa a mediana das notas de pelo menos 3 experts no assunto, que avaliaram os vinhos de acordo com uma escala que ia de 0 (muito ruim) a 10 (muito excelente). A maioria dos vinhos obteve uma nota entre 5 e 7, tendo sido 6 a nota mais comum. O pior vinho recebeu nota 3, e o melhor, 9.
+
+### Segundo Gráfico
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Two}
+ggplot(data = wq, aes(x = alcohol, y = quality)) +
+  geom_point(alpha = 1/50) +
+  scale_x_continuous(breaks = seq(8,14,1)) +
+  scale_y_continuous(breaks = seq(3,9,1)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth() +
+  labs(title = 'Qualidade x teor alcóolico',
+       x = 'Teor alcóolico (%)', y = 'Qualidade') +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+### Descrição do Segundo Gráfico
+
+O gráfico acima ilustra a relação entre o teor alcóolico e a qualidade a partir da sobreposição de três vizualizações diferentes. Primeiramente, em tons de cinza, temos uma dispersão contendo todos os pontos do conjunto para essas duas variáveis. Devido à enorme quantidade de pontos, e para se evitar o chamado *overplotting*, alterou-se o valor do parâmetro _**alpha**_ para tornar o ponto mais translúcido. Isso tornou possível a identificação das regiões com maior concentração de pontos. O fato da qualidade assumir apenas valores inteiros ainda não permitia perceber com acurácia a relação entre as duas variáveis. Por isso, optou-se por incluir na visualização um gráfico de linha (em vermelho) representando as qualidades médias para cada valor de teor alcóolico. Com isso, pôde-se começar a identificar certo comportamento ascendente. Porém, como eram muitos valores diferentes de teor alcóolico, e nem sempre havia pontos suficientes para calcular uma média confiável, gerou-se muito ruído. Para contornar esse problema, incluiu-se uma terceira visualização: uma curva de suavização da média, em azul. Com esta, ficou clara a correlação existente entre teor alcóolico e qualidade. Quanto maior aquele, maior também esta.
+
+### Terceiro Gráfico
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Three}
+p1 <- ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
+  geom_point(alpha = 1/100) +
+  xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
+  scale_y_continuous(breaks = seq(3,9,1)) +
+  geom_line(stat = "summary", fun.y = mean, color = "red") +
+  geom_smooth() +
+  labs(title = '1) Qualidade x acidez volátil',
+       x = 'Acidez volátil (g/L)', y = 'Qualidade') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+p2 <- ggplot(data = wq, aes(x = volatile.acidity, y = alcohol)) +
+  geom_point(aes(color = quality.factor), alpha = 1, size = 1) +
+  xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
+  scale_y_continuous(breaks = seq(8,14,1)) +
+  scale_color_brewer(type = 'seq', direction = -1,
+                     guide = guide_legend(title = 'Qualidade',
+                                          override.aes = list(alpha = 1, size = 2))) +
+  labs(title = '2) Qualidade x Teor alcóolico x Acidez volátil',
+       x = 'Acidez volátil (g/L)', y = 'Teor alcóolico (%)') +
+  theme(plot.title = element_text(size = rel(0.7),hjust = 0.5))
+
+p3 <- ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
+  xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
+  geom_smooth(aes(color = alcohol > 12)) +
+  scale_color_manual(guide = guide_legend(title = 'Teor\nalcóolico'),
+                     labels = c("< 12%", ">= 12%"), values = c('red', 'blue')) +
+  labs(title = '(3)',x = 'Acidez volátil (g/L)', y = 'Qualidade') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+grid.arrange(p1,p2,p3,ncol = 2)
+```
+
+### Descrição do Terceiro Gráfico
+
+As visualizações acima ilustram a relação entre acidez volátil, teor alcóolico e qualidade. Partiram da estranheza causada pelo fato de que a relação entre acidez volátil e qualidade não era estritamente decrescente, mas apresentava um considerável intervalo constante (gráfico 1). Isso era inesperado, pois sabemos que uma acidez volátil alta deixa o vinho com um sabor desagradável de vinagre. Teve-se a ideia, então, de incluir como variável aquela que havia demonstrado ter a maior influência sobre a qualidade: o teor alcóolico. Na dispersão gerada (gráfico 2), observou-se que a nova variável influencia a relação entre as outras duas. Para percentagens baixas de teor alcóolico, o azul esmaecente indica que a relação entre acidez volátil e qualidade de fato parece ser decrescente. Já para altos teores alcóolicos, ela parece ser constante, ou mesmo crescente. Para melhor investigar esse fenômeno, utilizou-se duas linhas de suavização da média (gráfico 3) para analisar a relação entre acidez fixa e qualidade a partir de duas faixas complementares de teor alcóolico (acima e abaixo de 12%). Com isso, ficou bastante claro o papel exercido por essa variável na relação entre as outras duas, e confirmou-se a suspeita gerada pelo gráfico 2.
+
+------
+
+# Reflexão
+
+Toda essa análise foi empreendida na tentativa de descobrir quais atributos físico-químicos dos vinhos brancos contidos no conjunto de dados mais influenciam a qualidade dos mesmos. Para isso, era essencial primeiro entender a natureza de cada um desses atributos, e como eles se relacionavam entre si. Era insuficiente, por exemplo, saber que o que significa o pH sem observar os seus fatores determinantes, a saber, a presença de certos ácidos no vinho; ou entender a definição de densidade, mas não saber quais são os líquidos constituintes dessa bebida. Tudo isso envolveu certa pesquisa que, ainda que não tenha abrangido todos os tópicos relacionados, foi determinante para dar suporte às investigações, trazer algumas questões, responder outras, ou seja, preencher a análise de sentido.
+
+Acredita-se que essa análise foi relativamente bem sucedida em identificar os principais fatores que determinam a qualidade dos vinhos. A maior dificuldade se deu pelo fato da variável que mede a qualidade ser do tipo inteiro, o que tende a diminuir o valor das correlações lineares pela própria natureza discreta da variável. Isso foi contornado com a utilização das curvas médias, que foram posteriormente suavizadas por conta do ruído que apresentavam. 
+
+Alguns atributos que fizeram falta foram o tipo de uva e o ano de fabricação do vinho que, junto com outras variáveis acessíveis ao consumidor médio, como teor alcóolico e pH, poderiam tornar a análise ainda mais amigável para um público leigo, além de ajudarem a explicar certas padrões observadas nos dados.
+
+A criação de um modelo que previsse a qualidade dos vinhos com base nos dados não estava entre os objetivos desta análise, mas seria um bom segundo passo para a continuidade a esse estudo.
