@@ -155,7 +155,9 @@ wq$alcohol.check <- sapply(wq$alcohol, alcohol.check)
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = quality)) +
   geom_histogram(binwidth = 0.5) +
-  scale_x_continuous(breaks = seq(3,9,1))
+  scale_x_continuous(breaks = seq(3,9,1)) +
+  labs(title = 'Distribuição da qualidade',
+       x = 'Qualidade', y = 'Ocorrências')
 
 summary(wq$quality)
 table(wq$quality)
@@ -165,7 +167,9 @@ A média da qualidade dos vinhos analisados é 5,878, numa escala de 0 a 10. A gra
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = fixed.acidity)) +
-  geom_histogram(binwidth = 0.1)
+  geom_histogram(binwidth = 0.1) +
+  labs(title = 'Concentração de acidez fixa',
+       x = 'Acidez fixa (g/L)', y = 'Ocorrências')
 
 summary(wq$fixed.acidity)
 table(wq$fixed.acidity.check)
@@ -177,7 +181,9 @@ Todos os vinhos do conjunto de dados obedecem à regulação para a acidez fixa.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = volatile.acidity)) + 
-  geom_histogram(binwidth = 0.01)
+  geom_histogram(binwidth = 0.01) +
+  labs(title = 'Concentração de acidez volátil',
+       x = 'Acidez volátil (g/L)', y = 'Ocorrências')
 
 summary(wq$volatile.acidity)
 table(wq$volatile.acidity.check)
@@ -191,7 +197,9 @@ Em breve, vamos investigar a relação entre acidez fixa e volátil.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = citric.acid)) +
-  geom_histogram(binwidth = 0.01)
+  geom_histogram(binwidth = 0.01) +
+  labs(title = 'Concentração de ácido cítrico',
+       x = 'Ácido cítrico (g/L)', y = 'Ocorrências')
 
 summary(wq$citric.acid)
 table(wq$citric.acid.check)
@@ -203,7 +211,9 @@ Dois vinhos estão fora dos padrões para concentração de ácido cítrico.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 p1 <- ggplot(data = wq, aes(x = residual.sugar)) +
-  geom_histogram(binwidth = 0.1)
+  geom_histogram(binwidth = 0.1) +
+  labs(title = 'Concentração de açúcar residual',
+       x = 'Açúcar residual (g/L)', y = 'Ocorrências')
 
 p2 <- p1 + scale_x_log10()
 
@@ -217,7 +227,9 @@ Os valores da média e da mediana sugerem uma distribuição de cauda longa, confir
 A partir das concentrações de açucar residual e acidez fixa, podem-se classificar os vinhos em seco, meio seco, meio doce e doce.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(data = wq, aes(x = classification)) + geom_bar()
+ggplot(data = wq, aes(x = classification)) + geom_bar() +
+  labs(title = 'Classificação dos vinhos',
+       x = 'Classificação', y = 'Ocorrências')
 table(wq$classification)
 ```
 
@@ -225,7 +237,9 @@ A maioria é composta por vinho do tipo seco, seguida na ordem pelos meio secos, 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = chlorides)) +
-  geom_histogram(binwidth = 0.001)
+  geom_histogram(binwidth = 0.001) +
+  labs(title = 'Concentração de cloreto de sódio',
+       x = 'Cloreto de sódio (g/L)', y = 'Ocorrências')
 
 summary(wq$chlorides)
 table(wq$chlorides.check)
@@ -237,7 +251,9 @@ Todos os vinhos do conjunto de dados obedecem à regulação para os cloretos.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = free.sulfur.dioxide)) +
-  geom_histogram(binwidth = 0.005)
+  geom_histogram(binwidth = 0.005) +
+  labs(title = 'Concentração de dióxido de enxofre livre',
+       x = 'Dióxido de enxofre livre (g/L)', y = 'Ocorrências')
 
 summary(wq$free.sulfur.dioxide)
 ```
@@ -246,7 +262,9 @@ A concentração de dióxido de enxofre livre apresenta uma distribuição aproximada
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = total.sulfur.dioxide)) +
-  geom_histogram(binwidth = 0.005)
+  geom_histogram(binwidth = 0.005) +
+  labs(title = 'Concentração de dióxido de enxofre total',
+       x = 'Dióxido de enxofre total (g/L)', y = 'Ocorrências')
 
 summary(wq$total.sulfur.dioxide)
 table(wq$total.sulfur.dioxide.check)
@@ -260,7 +278,9 @@ Espera-se observar adiante alguma correlação entre as concentrações livres e tot
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = density)) +
-  geom_histogram(binwidth = 0.0005)
+  geom_histogram(binwidth = 0.0005) +
+  labs(title = 'Distribuição da densidade',
+       x = 'Densidade (g/L)', y = 'Ocorrências')
 
 summary(wq$density)
 ```
@@ -269,7 +289,9 @@ A densidade apresenta uma distribuição normal centrada em aproximadamente 0,994g
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = pH)) +
-  geom_histogram(binwidth = 0.05)
+  geom_histogram(binwidth = 0.05) +
+  labs(title = 'Distribuição do pH',
+       x = 'pH', y = 'Ocorrências')
 
 summary(wq$pH)
 ```
@@ -278,7 +300,9 @@ O pH apresenta uma distribuição normal centrada em aproximadamente 3,18. Espera-
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = sulphates)) +
-  geom_histogram(binwidth = 0.01)
+  geom_histogram(binwidth = 0.01) +
+  labs(title = 'Concentração de sulfato de potássio',
+       x = 'Sulfato de potássio (g/L)', y = 'Ocorrências')
 
 summary(wq$sulphates)
 table(wq$sulphates.check)
@@ -292,7 +316,9 @@ Adiante, veremos como essa variável se relaciona com o dióxido de enxofre.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = alcohol)) +
-  geom_histogram(binwidth = 0.1)
+  geom_histogram(binwidth = 0.1) +
+  labs(title = 'Distribuição do teor alcóolico',
+       x = 'Teor alcóolico (% do volume)', y = 'Ocorrências')
 
 summary(wq$alcohol)
 table(wq$alcohol.check)
@@ -352,7 +378,9 @@ O atributo que a princípio possui a maior correlação com a qualidade é o teor al
 ggplot(data = wq, aes(x = alcohol, y = quality)) +
   geom_point(alpha = 1/50) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Qualidade x teor alcóolico',
+       x = 'Teor alcóolico (% do volume)', y = 'Qualidade')
 
 cor(wq$alcohol, wq$quality)
 ```
@@ -364,7 +392,9 @@ ggplot(data = wq, aes(x = density, y = quality)) +
   geom_point(alpha = 1/25) +
   xlim(min(wq$density), quantile(wq$density, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Qualidade x densidade',
+       x = 'Densidade (g/L)', y = 'Qualidade')
 
 cor(wq$density, wq$quality)
 ```
@@ -376,7 +406,9 @@ ggplot(data = wq, aes(x = chlorides, y = quality)) +
   geom_point(alpha = 1/100) +
   xlim(min(wq$chlorides), quantile(wq$chlorides, 0.97)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Qualidade x cloreto de sódio',
+       x = 'Cloreto de sódio (g/L)', y = 'Qualidade')
 
 cor(wq$density, wq$quality)
 ```
@@ -388,7 +420,9 @@ ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
   geom_point(alpha = 1/100) +
   xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Qualidade x acidez volátil',
+       x = 'Acidez volátil (g/L)', y = 'Qualidade')
 
 cor(wq$volatile.acidity, wq$quality)
 ```
@@ -400,7 +434,9 @@ ggplot(data = wq, aes(x = pH, y = quality)) +
   geom_point(alpha = 1/100) +
   xlim(quantile(wq$pH, 0.01), quantile(wq$pH, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Qualidade x pH',
+       x = 'pH', y = 'Qualidade')
 
 cor(wq$pH, wq$quality)
 ```
@@ -412,7 +448,9 @@ ggplot(data = wq, aes(x = alcohol, y = density)) +
   geom_point(alpha = 1/10) +
   ylim(min(wq$density), quantile(wq$density, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Densidade x teor alcóolico',
+       x = 'Teor alcóolico (% do volume)', y = 'Densidade (g/L)')
 
 cor(wq$alcohol, wq$density)
 ```
@@ -425,7 +463,9 @@ ggplot(data = wq, aes(x = residual.sugar, y = density)) +
   ylim(min(wq$density), quantile(wq$density, 0.99)) +
   xlim(0, quantile(wq$residual.sugar, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Densidade x açúcar residual',
+       x = 'Açúcar residual (g/L)', y = 'Densidade (g/L)')
 
 cor(wq$residual.sugar, wq$density)
 ```
@@ -437,7 +477,9 @@ ggplot(data = wq, aes(x = residual.sugar, y = alcohol)) +
   geom_point(alpha = 1/10) +
   xlim(0, quantile(wq$residual.sugar, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Teor alcóolico x açúcar residual',
+       x = 'Açúcar residual (g/L)', y = 'Teor alcóolico (% do volume)')
 
 cor(wq$residual.sugar, wq$alcohol)
 ```
@@ -450,7 +492,9 @@ ggplot(data = wq, aes(x = fixed.acidity, y = volatile.acidity)) +
   xlim(quantile(wq$fixed.acidity, 0.01), quantile(wq$fixed.acidity, 0.99)) +
   ylim(quantile(wq$volatile.acidity, 0.01), quantile(wq$volatile.acidity, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Acidez volátil x acidez fixa',
+       x = 'Acidez fixa (g/L)', y = 'Acidez volátil (g/L)')
 
 cor(wq$fixed.acidity, wq$volatile.acidity)
 ```
@@ -462,7 +506,9 @@ ggplot(data = wq, aes(x = fixed.acidity, y = pH)) +
   geom_point(alpha = 1/25) +
   xlim(quantile(wq$fixed.acidity, 0.01), quantile(wq$fixed.acidity, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'pH x acidez fixa',
+       x = 'Acidez fixa (g/L)', y = 'pH')
 
 cor(wq$fixed.acidity, wq$pH)
 ```
@@ -475,7 +521,9 @@ ggplot(data = wq, aes(x = sulphates, y = total.sulfur.dioxide)) +
   xlim(quantile(wq$sulphates, 0.01), quantile(wq$sulphates, 0.99)) +
   ylim(quantile(wq$total.sulfur.dioxide, 0.01), quantile(wq$total.sulfur.dioxide, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Dióxido de enxofre total x sulfato de potássio',
+       x = 'Sulfato de potássio (g/L)', y = 'Dióxido de enxofre (g/L)')
 
 cor(wq$sulphates, wq$total.sulfur.dioxide)
 ```
@@ -487,7 +535,10 @@ wq$quality.factor <- factor(wq$quality, levels = seq(9,3,-1), ordered = TRUE)
 
 ggplot(data = wq, aes(x = classification, fill = quality.factor)) +
   geom_bar() +
-  scale_fill_brewer(type = 'div', palette = 'RdBu', direction = -1)
+  scale_fill_brewer(type = 'div', palette = 'RdBu', direction = -1,
+                    guide = guide_legend(title = 'Qualidade')) +
+  labs(title = 'Qualidade x classificação',
+       x = 'Classificação', y = 'Ocorrências')
 
 wq.quality_by_class <- wq %>% 
   group_by(classification) %>% 
@@ -503,7 +554,10 @@ ggplot(data = wq, aes(x = residual.sugar, y = quality)) +
   geom_point(alpha = 1/50) +
   xlim(0, quantile(wq$residual.sugar, 0.99)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
-  geom_smooth()
+  geom_smooth() +
+  labs(title = 'Qualidade x açúcar residual',
+       x = 'Açúcar residual (g/L)', y = 'Qualidade')
+  
 
 cor(wq$residual.sugar, wq$quality)
 ```
@@ -513,7 +567,10 @@ Investigando a variável mais determinante para a classificação vinho (açucar res
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = check.count, fill = quality.factor)) +
   geom_bar() +
-  scale_fill_brewer(type = 'div', palette = 'RdBu', direction = -1)
+  scale_fill_brewer(type = 'div', palette = 'RdBu', direction = -1,
+                    guide = guide_legend(title = 'Qualidade')) +
+  labs(title = 'Qualidade x testes aprovados',
+       x = 'Testes aprovados', y = 'Ocorrências')
 
 wq.quality_by_check <- wq %>% 
   group_by(check.count) %>% 
@@ -551,7 +608,12 @@ A maior correlação encontrada (0,839) foi entre densidade e açucar residual.
 ggplot(data = wq, aes(x = volatile.acidity, y = alcohol)) +
   xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.99)) +
   geom_point(aes(color = quality.factor), alpha = 1) +
-  scale_color_brewer(type = 'seq', direction = -1)
+  scale_color_brewer(type = 'seq', direction = -1,
+                     guide = guide_legend(title = 'Qualidade',
+                                          override.aes = list(alpha = 1,
+                                                              size = 2))) +
+  labs(title = 'Qualidade x Teor alcóolico x Acidez volátil',
+       x = 'Acidez volátil (g/L)', y = 'Teor alcóolico (% do volume)')
 ```
 
 A qualidade é tanto maior quanto menor a acidez volatil e maior o teor alcóolico. Todavia, para teores alcóolicos acima de 12%, o aumento da acidez volátil parece não interferir na qualidade.
@@ -559,7 +621,12 @@ A qualidade é tanto maior quanto menor a acidez volatil e maior o teor alcóolico
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
   xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
-  geom_smooth(aes(color = alcohol > 12))
+  geom_smooth(aes(color = alcohol > 12)) +
+  scale_color_manual(guide = guide_legend(title = 'Teor alcóolico'),
+                     labels = c("< 12% do volume", ">= 12% do volume"),
+                     values = c('red', 'blue')) +
+  labs(title = 'Qualidade x Teor alcóolico x Acidez volátil',
+       x = 'Acidez volátil (g/L)', y = 'Qualidade')
 ```
 
 A relação entre qualidade e acidez volátil é diferente para níveis de teor alcóolico abaixo e acima de 12%.
@@ -568,7 +635,12 @@ A relação entre qualidade e acidez volátil é diferente para níveis de teor alcóo
 ggplot(data = wq, aes(x = citric.acid, y = sulphates)) +
   xlim(min(wq$citric.acid), quantile(wq$citric.acid, 0.99)) +
   geom_point(aes(color = quality.factor), alpha = 1) +
-  scale_color_brewer(type = 'seq', direction = -1)
+  scale_color_brewer(type = 'seq', direction = -1,
+                     guide = guide_legend(title = 'Qualidade',
+                                          override.aes = list(alpha = 1,
+                                                              size = 2))) +
+  labs(title = 'Qualidade x ácido cítrico x sulfato de potássio',
+       x = 'Ácido cítrico (g/L)', y = 'Sulfato de potássio (g/L)')
 ```
 
 Não se observa uma relação definida entre ácido cítrico, sulfato de potássio e a qualidade.
@@ -578,7 +650,12 @@ ggplot(data = wq, aes(x = fixed.acidity, y = volatile.acidity)) +
   xlim(quantile(wq$fixed.acidity, 0.01), quantile(wq$fixed.acidity, 0.99)) +
   ylim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.99)) +
   geom_point(aes(color = quality.factor), alpha = 1) +
-  scale_color_brewer(type = 'seq', direction = -1)
+  scale_color_brewer(type = 'seq', direction = -1,
+                     guide = guide_legend(title = 'Qualidade',
+                                          override.aes = list(alpha = 1,
+                                                              size = 2))) +
+  labs(title = 'Qualidade x acidez volátil x acidez fixa',
+       x = 'Acidez fixa (g/L)', y = 'Acidez volátil (g/L)')
 ```
 
 Não é possível identificar a relação entre acidez fixa, volátil e a qualidade.
@@ -588,7 +665,11 @@ ggplot(data = wq, aes(x = residual.sugar, y = alcohol)) +
   geom_point(aes(color = density), alpha = 1/2) +
   xlim(0, quantile(wq$residual.sugar, 0.99)) +
   scale_colour_gradient(low = '#56B1F7', high = '#132B43',
-                        limits = c(min(wq$density), quantile(wq$density, 0.99)))
+                        limits = c(min(wq$density), quantile(wq$density,
+                                                             0.99)),
+                        guide = guide_legend(title = 'Densidade (g/L)')) +
+  labs(title = 'Densidade x teor alcóolico x açúcar residual',
+       x = 'Açúcar residual (g/L)', y = 'Teor alcóolico (% do volume)')
 ```
 
 A densidade é tanto maior quanto maior a concentração de açúcar e quanto menor o teor alcóolico, confirmando algumas das observações da seção anterior.
@@ -596,7 +677,9 @@ A densidade é tanto maior quanto maior a concentração de açúcar e quanto menor o
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data = subset(wq, classification != 'doce'),
        aes(x = classification, y = free.sulfur.dioxide/total.sulfur.dioxide)) +
-  geom_boxplot()
+  geom_boxplot() +
+  labs(title = 'Proporção de dióxido de enxofre livre x classificação',
+       x = 'Classificação', y = 'Proporção de dióxido de enxofre livre')
 ```
 
 A proporção entre dióxido de enxofre livre e total é aproximadamente a mesma entre as diferentes classificações de vinho branco, gravitando um pouco acima de 0,25.
@@ -642,7 +725,7 @@ ggplot(data = wq, aes(x = alcohol, y = quality)) +
   geom_line(stat = "summary", fun.y = mean, color = "red") +
   geom_smooth() +
   labs(title = 'Qualidade x teor alcóolico',
-       x = 'Teor alcóolico (%)', y = 'Qualidade') +
+       x = 'Teor alcóolico (% do volume)', y = 'Qualidade') +
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
@@ -670,14 +753,15 @@ p2 <- ggplot(data = wq, aes(x = volatile.acidity, y = alcohol)) +
                      guide = guide_legend(title = 'Qualidade',
                                           override.aes = list(alpha = 1, size = 2))) +
   labs(title = '2) Qualidade x Teor alcóolico x Acidez volátil',
-       x = 'Acidez volátil (g/L)', y = 'Teor alcóolico (%)') +
+       x = 'Acidez volátil (g/L)', y = 'Teor alcóolico (% do volume)') +
   theme(plot.title = element_text(size = rel(0.7),hjust = 0.5))
 
 p3 <- ggplot(data = wq, aes(x = volatile.acidity, y = quality)) +
   xlim(min(wq$volatile.acidity), quantile(wq$volatile.acidity, 0.98)) +
   geom_smooth(aes(color = alcohol > 12)) +
   scale_color_manual(guide = guide_legend(title = 'Teor\nalcóolico'),
-                     labels = c("< 12%", ">= 12%"), values = c('red', 'blue')) +
+                     labels = c("< 12% do volume", ">= 12% do volume"),
+                     values = c('red', 'blue')) +
   labs(title = '(3)',x = 'Acidez volátil (g/L)', y = 'Qualidade') +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -696,6 +780,6 @@ Toda essa análise foi empreendida na tentativa de descobrir quais atributos físi
 
 Acredita-se que essa análise foi relativamente bem sucedida em identificar os principais fatores que determinam a qualidade dos vinhos. A maior dificuldade se deu pelo fato da variável que mede a qualidade ser do tipo inteiro, o que tende a diminuir o valor das correlações lineares pela própria natureza discreta da variável. Isso foi contornado com a utilização das curvas médias, que foram posteriormente suavizadas por conta do ruído que apresentavam. 
 
-Alguns atributos que fizeram falta foram o tipo de uva e o ano de fabricação do vinho que, junto com outras variáveis acessíveis ao consumidor médio, como teor alcóolico e pH, poderiam tornar a análise ainda mais amigável para um público leigo, além de ajudarem a explicar certas padrões observadas nos dados.
+Alguns atributos que fizeram falta foram o tipo de uva e o ano de fabricação do vinho que, junto com outras variáveis acessíveis ao consumidor médio, como teor alcóolico e pH, poderiam tornar a análise ainda mais amigável para um público leigo, além de ajudarem a explicar certos padrões observados nos dados.
 
 A criação de um modelo que previsse a qualidade dos vinhos com base nos dados não estava entre os objetivos desta análise, mas seria um bom segundo passo para a continuidade a esse estudo.
